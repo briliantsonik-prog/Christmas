@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Vice City 3D</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
@@ -21,6 +22,27 @@ body{background:#000;overflow:hidden;font-family:Arial,sans-serif}
 #overlay .start{font-size:16px;color:#fff;animation:pulse 1.5s infinite}
 #overlay .keys{margin-top:20px;color:#aaa;font-size:13px;line-height:2}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+
+/* ── TOUCH CONTROLS ── */
+#touchUI{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:6;display:none}
+#joyBase{position:absolute;bottom:90px;left:50px;width:130px;height:130px;border-radius:50%;
+  background:rgba(255,255,255,0.1);border:2px solid rgba(255,255,255,0.35);
+  pointer-events:all;touch-action:none}
+#joyStick{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  width:54px;height:54px;border-radius:50%;
+  background:rgba(255,255,255,0.45);border:2px solid rgba(255,255,255,0.7);
+  pointer-events:none;transition:transform 0.05s}
+#lookArea{position:absolute;top:0;right:0;width:55%;height:72%;pointer-events:all;touch-action:none}
+.tbtn{position:absolute;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-weight:bold;font-size:13px;color:#fff;pointer-events:all;touch-action:none;
+  user-select:none;-webkit-user-select:none;border:2px solid rgba(255,255,255,0.5);
+  text-shadow:0 1px 3px #000;transition:background 0.1s}
+#btnF{bottom:155px;right:70px;width:68px;height:68px;background:rgba(80,220,80,0.3);font-size:16px}
+#btnSpace{bottom:70px;right:155px;width:72px;height:72px;background:rgba(255,140,0,0.3);font-size:12px}
+#btnRun{bottom:155px;right:155px;width:58px;height:58px;background:rgba(80,120,255,0.3);font-size:11px}
+#btnBrake{bottom:70px;right:70px;width:58px;height:58px;background:rgba(220,50,50,0.3);font-size:11px}
+.tbtn.active{background:rgba(255,255,255,0.4)!important}
+#touchHint{position:absolute;bottom:235px;right:50px;color:rgba(255,255,255,0.5);font-size:10px;text-align:center;pointer-events:none}
 </style>
 </head>
 <body>
@@ -48,6 +70,17 @@ body{background:#000;overflow:hidden;font-family:Arial,sans-serif}
     F Enter/Exit Car &nbsp; Mouse Look &nbsp; ESC Unlock
   </div>
   <canvas id="mmCanvas" width="160" height="160"></canvas>
+</div>
+
+<!-- TOUCH UI -->
+<div id="touchUI">
+  <div id="joyBase"><div id="joyStick"></div></div>
+  <div id="lookArea"></div>
+  <div id="btnF" class="tbtn">F<br><span style="font-size:9px">Car</span></div>
+  <div id="btnSpace" class="tbtn">JUMP<br>BRAKE</div>
+  <div id="btnRun" class="tbtn">RUN</div>
+  <div id="btnBrake" class="tbtn">HAND<br>BRAKE</div>
+  <div id="touchHint">SWIPE TO LOOK</div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -99,7 +132,75 @@ let pointerLocked = false;
 document.addEventListener('keydown', e=>{ keys[e.code]=true; e.preventDefault(); });
 document.addEventListener('keyup',   e=>{ keys[e.code]=false; });
 document.addEventListener('mousemove', e=>{ if(pointerLocked){ mouse.dx+=e.movementX; mouse.dy+=e.movementY; } });
+// touch look is added directly in mouse.dx/dy — no pointer lock needed
 document.addEventListener('pointerlockchange', ()=>{ pointerLocked=!!document.pointerLockElement; });
+
+// ── TOUCH STATE ──
+const touch = {joyX:0, joyY:0, space:false, run:false, brake:false};
+const isMobile = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+
+(function setupTouch(){
+  if(!isMobile) return;
+  document.getElementById('touchUI').style.display = 'block';
+
+  // ── JOYSTICK ──
+  const jBase = document.getElementById('joyBase');
+  const jStick = document.getElementById('joyStick');
+  let joyId = null, jRect;
+  jBase.addEventListener('touchstart', e=>{
+    e.preventDefault();
+    joyId = e.changedTouches[0].identifier;
+    jRect = jBase.getBoundingClientRect();
+  },{passive:false});
+  jBase.addEventListener('touchmove', e=>{
+    e.preventDefault();
+    for(const t of e.changedTouches){
+      if(t.identifier !== joyId) continue;
+      const cx = jRect.left + jRect.width/2, cy = jRect.top + jRect.height/2;
+      let dx = t.clientX - cx, dy = t.clientY - cy;
+      const r = 46, d = Math.sqrt(dx*dx+dy*dy);
+      if(d > r){ dx *= r/d; dy *= r/d; }
+      touch.joyX = dx/r; touch.joyY = dy/r;
+      jStick.style.transform = `translate(calc(-50% + ${dx}px),calc(-50% + ${dy}px))`;
+    }
+  },{passive:false});
+  const joyEnd = ()=>{ touch.joyX=0; touch.joyY=0; joyId=null; jStick.style.transform='translate(-50%,-50%)'; };
+  jBase.addEventListener('touchend', joyEnd);
+  jBase.addEventListener('touchcancel', joyEnd);
+
+  // ── LOOK AREA ──
+  const lookEl = document.getElementById('lookArea');
+  let lookId = null, lx, ly;
+  lookEl.addEventListener('touchstart', e=>{
+    e.preventDefault();
+    const t = e.changedTouches[0];
+    lookId = t.identifier; lx = t.clientX; ly = t.clientY;
+  },{passive:false});
+  lookEl.addEventListener('touchmove', e=>{
+    e.preventDefault();
+    for(const t of e.changedTouches){
+      if(t.identifier !== lookId) continue;
+      mouse.dx += (t.clientX - lx) * 1.6;
+      mouse.dy += (t.clientY - ly) * 1.6;
+      lx = t.clientX; ly = t.clientY;
+    }
+  },{passive:false});
+  lookEl.addEventListener('touchend', ()=>{ lookId=null; });
+
+  // ── BUTTONS ──
+  function mkBtn(id, down, up){
+    const el = document.getElementById(id);
+    const onDown = e=>{ e.preventDefault(); el.classList.add('active'); down && down(); };
+    const onUp   = e=>{ e.preventDefault(); el.classList.remove('active'); up && up(); };
+    el.addEventListener('touchstart', onDown, {passive:false});
+    el.addEventListener('touchend',   onUp,   {passive:false});
+    el.addEventListener('touchcancel',onUp,   {passive:false});
+  }
+  mkBtn('btnF',    ()=>keys['KeyF']=true,  ()=>keys['KeyF']=false);
+  mkBtn('btnSpace',()=>touch.space=true,   ()=>touch.space=false);
+  mkBtn('btnBrake',()=>touch.brake=true,   ()=>touch.brake=false);
+  mkBtn('btnRun',  ()=>{ touch.run=!touch.run; document.getElementById('btnRun').classList.toggle('active',touch.run); }, null);
+})();
 
 // ── STATE ──
 const G = {
@@ -422,10 +523,10 @@ function update(ts){
 }
 
 function updateFoot(dt){
-  const run=keys['ShiftLeft']||keys['ShiftRight'];
+  const run=keys['ShiftLeft']||keys['ShiftRight']||touch.run;
   const spd=run?8.5:4.5;
-  const dx=(keys['KeyD']||keys['ArrowRight']?1:0)-(keys['KeyA']||keys['ArrowLeft']?1:0);
-  const dz=(keys['KeyS']||keys['ArrowDown'] ?1:0)-(keys['KeyW']||keys['ArrowUp']   ?1:0);
+  const dx=(keys['KeyD']||keys['ArrowRight']?1:0)-(keys['KeyA']||keys['ArrowLeft']?1:0)+touch.joyX;
+  const dz=(keys['KeyS']||keys['ArrowDown'] ?1:0)-(keys['KeyW']||keys['ArrowUp']   ?1:0)+touch.joyY;
   if(dx||dz){
     const ang=G.yaw+Math.atan2(dx,dz);
     const nx=player.pos.x+Math.sin(ang)*spd*dt;
@@ -437,7 +538,7 @@ function updateFoot(dt){
   } else {
     player.mesh.position.y=player.pos.y;
   }
-  if(keys['Space']&&player.onGround){ player.vel.y=6.2; player.onGround=false; }
+  if((keys['Space']||touch.space)&&player.onGround){ player.vel.y=6.2; player.onGround=false; }
   if(!player.onGround){
     player.vel.y-=16*dt; player.pos.y+=player.vel.y*dt;
     if(player.pos.y<=1){ player.pos.y=1; player.vel.y=0; player.onGround=true; }
@@ -452,9 +553,9 @@ function updateFoot(dt){
 let ts=0;
 function updateCar(dt){
   const car=G.currentCar; if(!car) return;
-  const fwd=(keys['KeyW']||keys['ArrowUp'])?1:((keys['KeyS']||keys['ArrowDown'])?-0.6:0);
-  const str=(keys['KeyA']||keys['ArrowLeft']?1:0)-(keys['KeyD']||keys['ArrowRight']?1:0);
-  if(keys['Space']) car.speed*=0.83;
+  const fwd=((keys['KeyW']||keys['ArrowUp'])?1:((keys['KeyS']||keys['ArrowDown'])?-0.6:0)) + (-touch.joyY);
+  const str=(keys['KeyA']||keys['ArrowLeft']?1:0)-(keys['KeyD']||keys['ArrowRight']?1:0) + (-touch.joyX);
+  if(keys['Space']||touch.brake) car.speed*=0.83;
   else car.speed+=fwd*22*dt;
   car.speed=Math.max(-12,Math.min(40,car.speed));
   if(!fwd) car.speed*=0.96;
@@ -576,7 +677,11 @@ buildMap();
 document.getElementById('overlay').addEventListener('click',()=>{
   document.getElementById('overlay').style.display='none';
   document.getElementById('hud').style.display='block';
-  renderer.domElement.requestPointerLock();
+  if(isMobile){
+    document.getElementById('touchUI').style.display='block';
+  } else {
+    renderer.domElement.requestPointerLock();
+  }
 });
 
 requestAnimationFrame(update);
