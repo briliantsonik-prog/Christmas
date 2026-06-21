@@ -2,64 +2,67 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>Vice City 3D</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{background:#000;overflow:hidden;font-family:Arial,sans-serif;touch-action:none}
+html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:Arial,sans-serif}
 
 /* HUD */
-#hud{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;display:none}
-#topLeft{position:absolute;top:12px;left:12px;color:#ffe;text-shadow:1px 1px 3px #000;font-size:13px;line-height:1.7}
+#hud{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;display:none;z-index:5}
+#topLeft{position:absolute;top:12px;left:12px;color:#ffe;text-shadow:1px 1px 3px #000;font-size:14px;line-height:1.8}
 #wanted{position:absolute;top:12px;right:12px;font-size:22px;color:#ff0;text-shadow:0 0 8px #f80}
-#enterPrompt{position:absolute;top:58%;left:50%;transform:translateX(-50%);color:#ff0;font-size:15px;background:rgba(0,0,0,0.6);padding:5px 16px;border-radius:6px;display:none}
-#health{width:110px;height:9px;background:#444;border-radius:4px;margin-top:3px;overflow:hidden}
-#healthBar{height:100%;background:#0f0;border-radius:4px}
-#mmCanvas{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);border:2px solid #ff69b4;border-radius:50%}
+#enterPrompt{position:absolute;top:56%;left:50%;transform:translateX(-50%);color:#ff0;font-size:15px;background:rgba(0,0,0,0.6);padding:6px 18px;border-radius:6px;display:none;white-space:nowrap}
+#health{width:120px;height:10px;background:#444;border-radius:5px;margin-top:4px;overflow:hidden}
+#healthBar{height:100%;background:#0f0;border-radius:5px}
+#mmCanvas{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);border:2px solid #ff69b4;border-radius:50%}
 
 /* OVERLAY */
-#overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:linear-gradient(135deg,#0a0a1a,#1a0a2a,#2a0a1a);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:10}
-#overlay h1{font-size:52px;color:#ff69b4;text-shadow:0 0 30px #ff69b4,0 0 60px #ff006688;letter-spacing:8px;margin-bottom:8px}
-.sub{font-size:20px;color:#00ffff;text-shadow:0 0 15px #00ffff;margin-bottom:30px;letter-spacing:4px}
+#overlay{position:fixed;inset:0;background:linear-gradient(135deg,#0a0a1a,#1a0a2a,#2a0a1a);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:20}
+#overlay h1{font-size:52px;color:#ff69b4;text-shadow:0 0 30px #ff69b4;letter-spacing:8px;margin-bottom:8px}
+.sub{font-size:20px;color:#00ffff;text-shadow:0 0 15px #00ffff;margin-bottom:28px;letter-spacing:4px}
 .start{font-size:17px;color:#fff;animation:blink 1.5s infinite}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
 
-/* TOUCH UI */
-#touchUI{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:6}
-
-/* Joystick */
-#joyZone{position:absolute;bottom:70px;left:20px;width:170px;height:170px;pointer-events:all;touch-action:none}
-#joyBase{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
-  width:150px;height:150px;border-radius:50%;
-  background:rgba(255,255,255,0.06);border:2px solid rgba(255,255,255,0.25)}
-#joyStick{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
-  width:60px;height:60px;border-radius:50%;
+/* TOUCH VISUALS — pure display, no pointer events */
+#joyBaseViz{
+  position:fixed;width:140px;height:140px;border-radius:50%;
+  background:rgba(255,255,255,0.07);border:2px solid rgba(255,255,255,0.28);
+  display:none;z-index:8;pointer-events:none;transform:translate(-50%,-50%)
+}
+#joyStickViz{
+  position:fixed;width:56px;height:56px;border-radius:50%;
   background:radial-gradient(circle at 35% 35%,rgba(255,255,255,0.7),rgba(255,255,255,0.3));
-  border:2px solid rgba(255,255,255,0.6);pointer-events:none}
-#joyTip{position:absolute;bottom:248px;left:90px;color:rgba(255,255,255,0.3);font-size:10px;pointer-events:none}
+  border:2px solid rgba(255,255,255,0.6);
+  display:none;z-index:9;pointer-events:none;transform:translate(-50%,-50%)
+}
 
-/* Look area */
-#lookZone{position:absolute;top:0;right:0;width:54%;height:66%;pointer-events:all;touch-action:none}
-#lookTip{position:absolute;top:16px;right:16px;color:rgba(255,255,255,0.25);font-size:10px;pointer-events:none}
+/* Button visuals */
+.vbtn{
+  position:fixed;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;flex-direction:column;
+  color:#fff;font-weight:bold;border:2.5px solid rgba(255,255,255,0.45);
+  text-shadow:0 1px 4px #000;z-index:8;pointer-events:none;
+  transition:background 0.07s,transform 0.07s
+}
+.vbtn.pressed{transform:scale(0.88)!important;background:rgba(255,255,255,0.42)!important}
+.vbtn small{font-size:9px;opacity:0.8;margin-top:1px}
 
-/* Buttons */
-.btn{position:absolute;border-radius:50%;display:flex;align-items:center;justify-content:center;
-  flex-direction:column;font-weight:bold;color:#fff;
-  pointer-events:all;touch-action:none;
-  user-select:none;-webkit-user-select:none;
-  border:2.5px solid rgba(255,255,255,0.4);
-  text-shadow:0 1px 4px #000}
-.btn span{font-size:9px;opacity:0.75;margin-top:1px}
-.btn.pressed{background:rgba(255,255,255,0.45)!important;transform:scale(0.9)}
+/* Responsive button sizes & positions */
+#vF    {width:14vw;height:14vw;max-width:82px;max-height:82px;font-size:max(16px,4.5vw);
+        right:4vw;bottom:30vw;background:rgba(60,200,60,0.28)}
+#vJump {width:16vw;height:16vw;max-width:90px;max-height:90px;font-size:max(12px,3.5vw);
+        right:20vw;bottom:14vw;background:rgba(255,200,0,0.28)}
+#vBrake{width:16vw;height:16vw;max-width:90px;max-height:90px;font-size:max(12px,3.5vw);
+        right:3vw;bottom:14vw;background:rgba(220,50,50,0.28)}
+#vRun  {width:13vw;height:13vw;max-width:75px;max-height:75px;font-size:max(11px,3vw);
+        right:20vw;bottom:31vw;background:rgba(60,100,255,0.28)}
+#vRun.runOn{background:rgba(60,100,255,0.6)!important;border-color:rgba(120,160,255,0.8)}
 
-#btnF    {bottom:240px;right:28px;  width:70px;height:70px;background:rgba(60,200,60,0.3); font-size:18px}
-#btnJump {bottom:145px;right:120px; width:85px;height:85px;background:rgba(255,200,0,0.3); font-size:13px}
-#btnBrake{bottom:145px;right:24px;  width:85px;height:85px;background:rgba(220,50,50,0.3); font-size:13px}
-#btnRun  {bottom:248px;right:122px; width:62px;height:62px;background:rgba(60,100,255,0.3);font-size:12px}
-
-/* Mode labels on buttons change */
-#modeHint{position:absolute;top:12px;left:50%;transform:translateX(-50%);
-  color:rgba(255,255,255,0.4);font-size:10px;pointer-events:none;text-align:center}
+#lookHint{position:fixed;top:16px;right:16px;color:rgba(255,255,255,0.25);font-size:10px;z-index:8;pointer-events:none;display:none}
+#modeHint{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+  color:rgba(255,255,255,0.5);font-size:11px;z-index:8;pointer-events:none;display:none}
 </style>
 </head>
 <body>
@@ -82,27 +85,18 @@ body{background:#000;overflow:hidden;font-family:Arial,sans-serif;touch-action:n
   <canvas id="mmCanvas" width="150" height="150"></canvas>
 </div>
 
-<div id="touchUI">
-  <!-- Left joystick -->
-  <div id="joyZone">
-    <div id="joyBase"></div>
-    <div id="joyStick"></div>
-  </div>
-  <div id="joyTip">MOVE / STEER</div>
+<!-- Joystick visuals -->
+<div id="joyBaseViz"></div>
+<div id="joyStickViz"></div>
 
-  <!-- Right look swipe -->
-  <div id="lookZone"></div>
-  <div id="lookTip">SWIPE TO LOOK</div>
+<!-- Button visuals -->
+<div id="vF"     class="vbtn">F<small>Car</small></div>
+<div id="vJump"  class="vbtn">JUMP<small id="jumpSub"></small></div>
+<div id="vBrake" class="vbtn">🛑<small>BRAKE</small></div>
+<div id="vRun"   class="vbtn">RUN<small id="runTxt">OFF</small></div>
 
-  <!-- Mode hint -->
-  <div id="modeHint">ON FOOT</div>
-
-  <!-- Action buttons -->
-  <div id="btnF" class="btn">F<span>Car</span></div>
-  <div id="btnJump" class="btn" id="btnJump">JUMP<span></span></div>
-  <div id="btnBrake" class="btn">🛑<span>BRAKE</span></div>
-  <div id="btnRun" class="btn">RUN<span id="runState">OFF</span></div>
-</div>
+<div id="lookHint">↕↔ SWIPE TO LOOK</div>
+<div id="modeHint"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
@@ -116,498 +110,447 @@ renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.3;
+renderer.domElement.style.cssText='position:fixed;top:0;left:0;z-index:1';
 document.body.appendChild(renderer.domElement);
 
 // ═══ SCENE ═══
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x5bc8f5);
 scene.fog = new THREE.Fog(0x87ceeb,160,450);
-
 const camera = new THREE.PerspectiveCamera(70,innerWidth/innerHeight,0.1,700);
 scene.add(camera);
-
 window.addEventListener('resize',()=>{
   renderer.setSize(innerWidth,innerHeight);
-  camera.aspect = innerWidth/innerHeight;
+  camera.aspect=innerWidth/innerHeight;
   camera.updateProjectionMatrix();
 });
 
 // ═══ LIGHTS ═══
 scene.add(new THREE.AmbientLight(0xfff8e7,0.45));
 scene.add(new THREE.HemisphereLight(0x87ceeb,0xd4a96a,0.35));
-const sun = new THREE.DirectionalLight(0xfff0c0,1.6);
-sun.position.set(80,150,60);
-sun.castShadow = true;
+const sun=new THREE.DirectionalLight(0xfff0c0,1.6);
+sun.position.set(80,150,60); sun.castShadow=true;
 sun.shadow.mapSize.set(2048,2048);
-sun.shadow.camera.near = 1;
-sun.shadow.camera.far = 600;
-sun.shadow.camera.left = sun.shadow.camera.bottom = -280;
-sun.shadow.camera.right = sun.shadow.camera.top = 280;
+sun.shadow.camera.near=1; sun.shadow.camera.far=600;
+sun.shadow.camera.left=sun.shadow.camera.bottom=-280;
+sun.shadow.camera.right=sun.shadow.camera.top=280;
 scene.add(sun);
 
-// ═══ TOUCH INPUT ═══
-const T = {
-  joyX: 0, joyY: 0,      // -1..1 joystick
-  lookDX: 0, lookDY: 0,  // camera delta
-  jump: false,
-  brake: false,
-  run: false,             // toggle
-  fDown: false,
-  fPrev: false,
-};
+// ═══ TOUCH INPUT — single document handler, zone detection by coords ═══
+const T={joyX:0,joyY:0,jump:false,brake:false,run:false,fDown:false,fPrev:false};
+const activeT={};    // touchId -> {role, ...}
+let joyCenter=null;  // {x,y} floating joystick origin
+const cam={dx:0,dy:0};
 
-const joyStickEl = document.getElementById('joyStick');
-const joyZoneEl  = document.getElementById('joyZone');
-let joyId = null;
+const joyBaseEl  = document.getElementById('joyBaseViz');
+const joyStickEl = document.getElementById('joyStickViz');
 
-joyZoneEl.addEventListener('touchstart', e=>{
-  e.preventDefault();
-  if(joyId !== null) return;
-  joyId = e.changedTouches[0].identifier;
-},{passive:false});
+function setJoyViz(dx,dy,cx,cy){
+  joyBaseEl.style.left = cx+'px';  joyBaseEl.style.top = cy+'px';
+  joyStickEl.style.left=(cx+dx)+'px'; joyStickEl.style.top=(cy+dy)+'px';
+}
 
-joyZoneEl.addEventListener('touchmove', e=>{
-  e.preventDefault();
-  for(const t of e.changedTouches){
-    if(t.identifier !== joyId) continue;
-    const r = joyZoneEl.getBoundingClientRect();
-    const cx = r.left + r.width/2, cy = r.top + r.height/2;
-    let dx = t.clientX - cx, dy = t.clientY - cy;
-    const dist = Math.sqrt(dx*dx+dy*dy), max = 55;
-    if(dist > max){ dx *= max/dist; dy *= max/dist; }
-    T.joyX = dx/max;
-    T.joyY = dy/max;
-    joyStickEl.style.transform = `translate(calc(-50% + ${dx}px),calc(-50% + ${dy}px))`;
+// Hit-test buttons using actual DOM rects
+const BTN_ELS={f:'vF',jump:'vJump',brake:'vBrake',run:'vRun'};
+function hitBtn(x,y){
+  for(const [name,id] of Object.entries(BTN_ELS)){
+    const r=document.getElementById(id).getBoundingClientRect();
+    if(x>=r.left&&x<=r.right&&y>=r.top&&y<=r.bottom) return name;
   }
-},{passive:false});
+  return null;
+}
+function btnViz(name,on){
+  const el=document.getElementById(BTN_ELS[name]);
+  if(name==='run'){if(on===undefined) return; /* toggled separately */}
+  if(on) el.classList.add('pressed'); else el.classList.remove('pressed');
+}
+function btnDown(name){
+  btnViz(name,true);
+  if(name==='jump')  T.jump=true;
+  if(name==='brake') T.brake=true;
+  if(name==='f')     T.fDown=true;
+  if(name==='run'){
+    T.run=!T.run;
+    const el=document.getElementById('vRun');
+    el.classList.toggle('runOn',T.run);
+    document.getElementById('runTxt').textContent=T.run?'ON':'OFF';
+    el.classList.add('pressed');
+    setTimeout(()=>el.classList.remove('pressed'),150);
+  }
+}
+function btnUp(name){
+  btnViz(name,false);
+  if(name==='jump')  T.jump=false;
+  if(name==='brake') T.brake=false;
+  if(name==='f')     T.fDown=false;
+}
 
-function joyEnd(e){
+// Is point in joystick zone? (left 45%, bottom 52%)
+function isJoyZone(x,y){ return x<innerWidth*0.45 && y>innerHeight*0.48; }
+
+function onTouchStart(e){
+  e.preventDefault();
+  // Start game on tap if overlay visible
+  const ov=document.getElementById('overlay');
+  if(ov.style.display!=='none'){
+    ov.style.display='none';
+    document.getElementById('hud').style.display='block';
+    document.getElementById('lookHint').style.display='block';
+    return;
+  }
   for(const t of e.changedTouches){
-    if(t.identifier === joyId){
-      joyId = null;
-      T.joyX = T.joyY = 0;
-      joyStickEl.style.transform = 'translate(-50%,-50%)';
+    const x=t.clientX,y=t.clientY;
+    const btn=hitBtn(x,y);
+    if(btn){
+      activeT[t.identifier]={role:'btn',btn};
+      btnDown(btn);
+      continue;
+    }
+    if(isJoyZone(x,y)){
+      activeT[t.identifier]={role:'joy'};
+      joyCenter={x,y};
+      joyBaseEl.style.display='block';
+      joyStickEl.style.display='block';
+      setJoyViz(0,0,x,y);
+    } else {
+      activeT[t.identifier]={role:'look',lx:x,ly:y};
     }
   }
 }
-joyZoneEl.addEventListener('touchend', joyEnd);
-joyZoneEl.addEventListener('touchcancel', joyEnd);
 
-// Look swipe
-const lookZoneEl = document.getElementById('lookZone');
-let lookId = null, lookLX = 0, lookLY = 0;
-const camMouse = {dx:0, dy:0};
-
-lookZoneEl.addEventListener('touchstart', e=>{
-  e.preventDefault();
-  if(lookId !== null) return;
-  const t = e.changedTouches[0];
-  lookId = t.identifier; lookLX = t.clientX; lookLY = t.clientY;
-},{passive:false});
-
-lookZoneEl.addEventListener('touchmove', e=>{
+function onTouchMove(e){
   e.preventDefault();
   for(const t of e.changedTouches){
-    if(t.identifier !== lookId) continue;
-    camMouse.dx += (t.clientX - lookLX) * 1.7;
-    camMouse.dy += (t.clientY - lookLY) * 1.7;
-    lookLX = t.clientX; lookLY = t.clientY;
+    const s=activeT[t.identifier]; if(!s) continue;
+    if(s.role==='joy'&&joyCenter){
+      let dx=t.clientX-joyCenter.x, dy=t.clientY-joyCenter.y;
+      const d=Math.sqrt(dx*dx+dy*dy),mx=58;
+      if(d>mx){dx*=mx/d;dy*=mx/d;}
+      T.joyX=dx/mx; T.joyY=dy/mx;
+      setJoyViz(dx,dy,joyCenter.x,joyCenter.y);
+    }
+    if(s.role==='look'){
+      cam.dx+=(t.clientX-s.lx)*1.8;
+      cam.dy+=(t.clientY-s.ly)*1.8;
+      s.lx=t.clientX; s.ly=t.clientY;
+    }
   }
-},{passive:false});
-
-function lookEnd(e){
-  for(const t of e.changedTouches) if(t.identifier===lookId) lookId=null;
-}
-lookZoneEl.addEventListener('touchend', lookEnd);
-lookZoneEl.addEventListener('touchcancel', lookEnd);
-
-// Button helper
-function makeBtn(id, onDown, onUp){
-  const el = document.getElementById(id);
-  const dn = e=>{ e.preventDefault(); el.classList.add('pressed'); onDown && onDown(); };
-  const up = e=>{ e.preventDefault(); el.classList.remove('pressed'); onUp && onUp(); };
-  el.addEventListener('touchstart', dn, {passive:false});
-  el.addEventListener('touchend',   up, {passive:false});
-  el.addEventListener('touchcancel',up, {passive:false});
-  return el;
 }
 
-makeBtn('btnJump',  ()=>T.jump=true,  ()=>T.jump=false);
-makeBtn('btnBrake', ()=>T.brake=true, ()=>T.brake=false);
-makeBtn('btnF',     ()=>T.fDown=true, ()=>T.fDown=false);
-makeBtn('btnRun', ()=>{
-  T.run = !T.run;
-  document.getElementById('runState').textContent = T.run ? 'ON' : 'OFF';
-}, null);
+function onTouchEnd(e){
+  e.preventDefault();
+  for(const t of e.changedTouches){
+    const s=activeT[t.identifier]; if(!s) continue;
+    if(s.role==='joy'){
+      T.joyX=T.joyY=0; joyCenter=null;
+      joyBaseEl.style.display='none'; joyStickEl.style.display='none';
+    }
+    if(s.role==='btn') btnUp(s.btn);
+    delete activeT[t.identifier];
+  }
+}
+
+document.addEventListener('touchstart',  onTouchStart, {passive:false});
+document.addEventListener('touchmove',   onTouchMove,  {passive:false});
+document.addEventListener('touchend',    onTouchEnd,   {passive:false});
+document.addEventListener('touchcancel', onTouchEnd,   {passive:false});
 
 // ═══ GAME STATE ═══
-const G = {
-  yaw: 0, pitch: -0.25, camDist: 9,
-  mode: 'foot',
-  speed: 0, health: 100, wanted: 0, wantedTimer: 0,
-  nearCar: null, currentCar: null,
-};
-const player = {
-  pos: new THREE.Vector3(8,1,5),
-  vel: new THREE.Vector3(),
-  onGround: true, mesh: null,
-};
-const cars = [], npcs = [], collidables = [];
+const G={yaw:0,pitch:-0.25,camDist:9,mode:'foot',speed:0,health:100,wanted:0,wantedTimer:0,nearCar:null,currentCar:null};
+const player={pos:new THREE.Vector3(8,1,5),vel:new THREE.Vector3(),onGround:true,mesh:null};
+const cars=[],npcs=[],col=[];
 
 // ═══ HELPERS ═══
 function mkBox(w,h,d,mat,x,y,z,cast,recv){
-  const m = new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat);
+  const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat);
   m.position.set(x,y,z);
-  if(cast) m.castShadow=true;
-  if(recv) m.receiveShadow=true;
+  if(cast)m.castShadow=true; if(recv)m.receiveShadow=true;
   scene.add(m); return m;
 }
-function addAABB(x,z,w,d){ collidables.push({minX:x-w/2,maxX:x+w/2,minZ:z-d/2,maxZ:z+d/2}); }
-function collides(x,z,r){
-  for(const c of collidables)
-    if(x+r>c.minX && x-r<c.maxX && z+r>c.minZ && z-r<c.maxZ) return true;
-  return false;
-}
+function addCol(x,z,w,d){col.push({minX:x-w/2,maxX:x+w/2,minZ:z-d/2,maxZ:z+d/2});}
+function hits(x,z,r){for(const c of col)if(x+r>c.minX&&x-r<c.maxX&&z+r>c.minZ&&z-r<c.maxZ)return true;return false;}
 
 // ═══ MAP ═══
 function buildMap(){
-  mkBox(600,0.2,600,new THREE.MeshLambertMaterial({color:0xc8a86a}),0,-0.1,0,false,true).receiveShadow=true;
-  mkBox(340,0.15,55, new THREE.MeshLambertMaterial({color:0xf5e07a}),0,0.02,-82,false,true);
-  mkBox(700,1,250,   new THREE.MeshLambertMaterial({color:0x0077bb,transparent:true,opacity:0.82}),0,0,-205,false,false);
-  mkBox(700,0.1,20,  new THREE.MeshLambertMaterial({color:0x00aadd,transparent:true,opacity:0.6}),0,0.1,-107,false,false);
+  mkBox(600,.2,600,new THREE.MeshLambertMaterial({color:0xc8a86a}),0,-.1,0,false,true).receiveShadow=true;
+  mkBox(340,.15,55,new THREE.MeshLambertMaterial({color:0xf5e07a}),0,.02,-82,false,true);
+  mkBox(700,1,250,new THREE.MeshLambertMaterial({color:0x0077bb,transparent:true,opacity:.82}),0,0,-205);
+  mkBox(700,.1,20,new THREE.MeshLambertMaterial({color:0x00aadd,transparent:true,opacity:.6}),0,.1,-107);
 
-  // Roads E-W
   [-50,-18,14,46,78].forEach(z=>{
-    mkBox(240,0.18,13,new THREE.MeshLambertMaterial({color:0x252525}),0,0.07,z,false,true).receiveShadow=true;
-    mkBox(240,0.02,0.4,new THREE.MeshBasicMaterial({color:0xffee00}),0,0.11,z);
-    mkBox(240,0.02,0.15,new THREE.MeshBasicMaterial({color:0xffffff}),0,0.11,z-3.5);
-    mkBox(240,0.02,0.15,new THREE.MeshBasicMaterial({color:0xffffff}),0,0.11,z+3.5);
+    mkBox(240,.18,13,new THREE.MeshLambertMaterial({color:0x252525}),0,.07,z,false,true).receiveShadow=true;
+    mkBox(240,.02,.4,new THREE.MeshBasicMaterial({color:0xffee00}),0,.11,z);
+    mkBox(240,.02,.15,new THREE.MeshBasicMaterial({color:0xfff}),0,.11,z-3.5);
+    mkBox(240,.02,.15,new THREE.MeshBasicMaterial({color:0xfff}),0,.11,z+3.5);
   });
-  // Roads N-S
   [-96,-64,-32,0,32,64,96].forEach(x=>{
-    mkBox(13,0.18,180,new THREE.MeshLambertMaterial({color:0x252525}),x,0.07,14,false,true).receiveShadow=true;
-    mkBox(0.4,0.02,180,new THREE.MeshBasicMaterial({color:0xffee00}),x,0.11,14);
+    mkBox(13,.18,180,new THREE.MeshLambertMaterial({color:0x252525}),x,.07,14,false,true).receiveShadow=true;
+    mkBox(.4,.02,180,new THREE.MeshBasicMaterial({color:0xffee00}),x,.11,14);
   });
-  // Sidewalks
   [-50,-18,14,46,78].forEach(z=>{
-    mkBox(240,0.22,3.5,new THREE.MeshLambertMaterial({color:0xbcaa96}),0,0.11,z-8.3);
-    mkBox(240,0.22,3.5,new THREE.MeshLambertMaterial({color:0xbcaa96}),0,0.11,z+8.3);
+    mkBox(240,.22,3.5,new THREE.MeshLambertMaterial({color:0xbcaa96}),0,.11,z-8.3);
+    mkBox(240,.22,3.5,new THREE.MeshLambertMaterial({color:0xbcaa96}),0,.11,z+8.3);
   });
 
-  // Buildings
-  [
-    [-78,-32,22,16,38,0xffe4b0],[-56,-32,18,14,26,0xff9daa],[-34,-32,18,14,44,0xc8f0ff],
-    [-12,-32,18,14,30,0xffd700],[ 10,-32,18,14,40,0xff87c0],[ 32,-32,18,14,28,0x90ee90],
-    [ 54,-32,20,16,46,0xffeaaa],[ 76,-32,18,14,32,0xbbd0ff],[ 98,-32,18,14,36,0xffb880],
-    [-80,  0,22,18,58,0xffd700],[-56,  0,20,16,42,0xff6b9d],[-32,  0,20,16,52,0x98d8c8],
-    [ -8,  0,20,16,48,0xffe4b5],[ 18,  0,20,16,62,0xffa07a],[ 44,  0,20,16,50,0x90ee90],
-    [ 70,  0,20,16,37,0x87ceeb],[ 96,  0,18,14,26,0xffccaa],
-    [-78, 32,24,20,32,0xfff0c0],[-52, 32,22,18,44,0xffaacc],[-26, 32,22,18,38,0xd0f8c0],
-    [  0, 32,22,18,28,0xffdead],[ 26, 32,22,18,46,0xb0d0ff],[ 52, 32,22,18,40,0xffc0a0],
-    [ 78, 32,22,18,34,0xffee88],[ 98, 32,20,16,24,0xd0c8ff],
-    [-78, 64,26,22,28,0xfff5b0],[-50, 64,24,20,36,0xffb6c1],[-20, 64,24,20,32,0xc0ffee],
-    [ 10, 64,24,20,30,0xffe4b5],[ 40, 64,24,20,34,0xffd700],[ 70, 64,24,20,26,0xff9d9d],
-    [-90, 22,26,24,74,0xffd700],[ 90, 22,26,24,68,0xff6b9d],
-    [-40, 78,34,28,22,0xd4edda],[ 30, 78,30,26,18,0xfaebd7],
-  ].forEach(([x,z,w,d,h,c])=>createBuilding(x,z,w,d,h,c));
+  [[-78,-32,22,16,38,0xffe4b0],[-56,-32,18,14,26,0xff9daa],[-34,-32,18,14,44,0xc8f0ff],
+   [-12,-32,18,14,30,0xffd700],[10,-32,18,14,40,0xff87c0],[32,-32,18,14,28,0x90ee90],
+   [54,-32,20,16,46,0xffeaaa],[76,-32,18,14,32,0xbbd0ff],[98,-32,18,14,36,0xffb880],
+   [-80,0,22,18,58,0xffd700],[-56,0,20,16,42,0xff6b9d],[-32,0,20,16,52,0x98d8c8],
+   [-8,0,20,16,48,0xffe4b5],[18,0,20,16,62,0xffa07a],[44,0,20,16,50,0x90ee90],
+   [70,0,20,16,37,0x87ceeb],[96,0,18,14,26,0xffccaa],
+   [-78,32,24,20,32,0xfff0c0],[-52,32,22,18,44,0xffaacc],[-26,32,22,18,38,0xd0f8c0],
+   [0,32,22,18,28,0xffdead],[26,32,22,18,46,0xb0d0ff],[52,32,22,18,40,0xffc0a0],
+   [78,32,22,18,34,0xffee88],[98,32,20,16,24,0xd0c8ff],
+   [-78,64,26,22,28,0xfff5b0],[-50,64,24,20,36,0xffb6c1],[-20,64,24,20,32,0xc0ffee],
+   [10,64,24,20,30,0xffe4b5],[40,64,24,20,34,0xffd700],[70,64,24,20,26,0xff9d9d],
+   [-90,22,26,24,74,0xffd700],[90,22,26,24,68,0xff6b9d],
+   [-40,78,34,28,22,0xd4edda],[30,78,30,26,18,0xfaebd7]
+  ].forEach(([x,z,w,d,h,c])=>mkBuilding(x,z,w,d,h,c));
 
-  // Palms
   for(let x=-130;x<=130;x+=15){
-    palmTree(x,-62+Math.sin(x*0.3)*3);
-    if(Math.abs(x%30)<5) palmTree(x+6,-69);
+    palm(x,-62+Math.sin(x*.3)*3);
+    if(Math.abs(x%30)<5)palm(x+6,-69);
   }
-  for(let x=-100;x<=100;x+=22){ palmTree(x,-43); palmTree(x,-8); }
-  for(let z=-40;z<=70;z+=25){ palmTree(-102,z); palmTree(102,z); }
-
-  // Lamp posts
+  for(let x=-100;x<=100;x+=22){palm(x,-43);palm(x,-8);}
+  for(let z=-40;z<=70;z+=25){palm(-102,z);palm(102,z);}
   [-50,-18,14,46,78].forEach(z=>{
-    for(let x=-100;x<=100;x+=28){ lampPost(x,z-9); lampPost(x,z+9); }
+    for(let x=-100;x<=100;x+=28){lamp(x,z-9);lamp(x,z+9);}
   });
 
-  // Player
-  const pg = new THREE.Group();
-  const body = new THREE.Mesh(new THREE.BoxGeometry(0.72,1.15,0.48),new THREE.MeshLambertMaterial({color:0x1a5276}));
-  body.position.y=0.8; pg.add(body);
-  const head = new THREE.Mesh(new THREE.BoxGeometry(0.52,0.52,0.50),new THREE.MeshLambertMaterial({color:0xf0c090}));
-  head.position.y=1.57; pg.add(head);
-  const lmat = new THREE.MeshLambertMaterial({color:0x1a2a3a});
-  [-0.19,0.19].forEach(lx=>{
-    const leg = new THREE.Mesh(new THREE.BoxGeometry(0.3,0.7,0.3),lmat);
-    leg.position.set(lx,0.05,0); pg.add(leg);
-  });
+  // Player mesh
+  const pg=new THREE.Group();
+  const b=new THREE.Mesh(new THREE.BoxGeometry(.72,1.15,.48),new THREE.MeshLambertMaterial({color:0x1a5276}));
+  b.position.y=.8; pg.add(b);
+  const h2=new THREE.Mesh(new THREE.BoxGeometry(.52,.52,.5),new THREE.MeshLambertMaterial({color:0xf0c090}));
+  h2.position.y=1.57; pg.add(h2);
+  const lm=new THREE.MeshLambertMaterial({color:0x1a2a3a});
+  [-0.19,.19].forEach(lx=>{const l=new THREE.Mesh(new THREE.BoxGeometry(.3,.7,.3),lm);l.position.set(lx,.05,0);pg.add(l);});
   pg.castShadow=true; scene.add(pg); player.mesh=pg;
 
-  // Cars (player drivable)
-  spawnCar(15,0,4,   0xff2200,false);
-  spawnCar(-15,0,4,  0x2255ff,false);
-  spawnCar(35,0,-50, 0xffcc00,false);
-
-  // NPC cars
+  spawnCar(15,0,4,0xff2200,false);
+  spawnCar(-15,0,4,0x2255ff,false);
+  spawnCar(35,0,-50,0xffcc00,false);
   const nc=[0x888888,0x00aa44,0xcc5500,0xaa00cc,0x00ccaa,0x884422,0x228844,0x44aacc];
-  [{x:-40,z:-50,r:0},{x:40,z:-50,r:Math.PI},{x:80,z:-18,r:Math.PI},
-   {x:-80,z:-18,r:0},{x:0,z:14,r:Math.PI/2},{x:0,z:46,r:-Math.PI/2},
-   {x:-64,z:14,r:0},{x:64,z:14,r:Math.PI},{x:30,z:-50,r:Math.PI},{x:-60,z:46,r:0}
+  [{x:-40,z:-50,r:0},{x:40,z:-50,r:Math.PI},{x:80,z:-18,r:Math.PI},{x:-80,z:-18,r:0},
+   {x:0,z:14,r:Math.PI/2},{x:0,z:46,r:-Math.PI/2},{x:-64,z:14,r:0},{x:64,z:14,r:Math.PI},
+   {x:30,z:-50,r:Math.PI},{x:-60,z:46,r:0}
   ].forEach(({x,z,r},i)=>{
     const c=spawnCar(x,0,z,nc[i%nc.length],true);
     c.mesh.rotation.y=r; c.npcSpeed=8+Math.random()*6; c.npcTT=2+Math.random()*3;
   });
-
-  // Pedestrians
   const pc=[0xff69b4,0xffd700,0x90ee90,0x87ceeb,0xff6347,0x9b59b6,0xe67e22,0x1abc9c];
   [{x:-80,z:-43},{x:-55,z:-43},{x:-30,z:-43},{x:10,z:-43},{x:40,z:-43},{x:70,z:-43},
    {x:-70,z:-11},{x:50,z:-11},{x:0,z:-11},{x:-40,z:22},{x:60,z:22},{x:20,z:22},
    {x:-90,z:22},{x:90,z:22},{x:90,z:-43}
-  ].forEach(({x,z},i)=>createNPC(x,z,pc[i%pc.length]));
+  ].forEach(({x,z},i)=>mkNPC(x,z,pc[i%pc.length]));
 }
 
-function createBuilding(x,z,w,d,h,color){
+function mkBuilding(x,z,w,d,h,color){
   mkBox(w,h,d,new THREE.MeshLambertMaterial({color}),x,h/2,z,true,true);
-  mkBox(w-2,1.5,d-2,new THREE.MeshLambertMaterial({color:0xddddcc}),x,h+0.75,z);
-  addAABB(x,z,w+0.6,d+0.6);
-  const wm=new THREE.MeshBasicMaterial({color:0xaaddff,transparent:true,opacity:0.55});
-  const floors=Math.floor(h/5);
-  for(let f=1;f<floors;f++){
-    [-w/3,w/3].forEach(ox=>{
-      const a=new THREE.Mesh(new THREE.PlaneGeometry(2.8,2),wm);
-      a.position.set(x+ox,f*5+2,z+d/2+0.06); scene.add(a);
-      const b=new THREE.Mesh(new THREE.PlaneGeometry(2.8,2),wm);
-      b.position.set(x+ox,f*5+2,z-d/2-0.06); b.rotation.y=Math.PI; scene.add(b);
-    });
-  }
-  if(Math.random()>0.55){
+  mkBox(w-2,1.5,d-2,new THREE.MeshLambertMaterial({color:0xddddcc}),x,h+.75,z);
+  addCol(x,z,w+.6,d+.6);
+  const wm=new THREE.MeshBasicMaterial({color:0xaaddff,transparent:true,opacity:.55});
+  const fl=Math.floor(h/5);
+  for(let f=1;f<fl;f++){[-w/3,w/3].forEach(ox=>{
+    const a=new THREE.Mesh(new THREE.PlaneGeometry(2.8,2),wm); a.position.set(x+ox,f*5+2,z+d/2+.06); scene.add(a);
+    const bv=new THREE.Mesh(new THREE.PlaneGeometry(2.8,2),wm); bv.position.set(x+ox,f*5+2,z-d/2-.06); bv.rotation.y=Math.PI; scene.add(bv);
+  });}
+  if(Math.random()>.55){
     const sc=[0xff0077,0x00ffff,0xffdd00,0xff5500][Math.floor(Math.random()*4)];
-    mkBox(w-4,0.8,0.3,new THREE.MeshBasicMaterial({color:sc}),x,h*0.55+2,z+d/2+0.22);
-    mkBox(w-4,0.8,0.3,new THREE.MeshBasicMaterial({color:sc}),x,h*0.55+2,z-d/2-0.22);
+    mkBox(w-4,.8,.3,new THREE.MeshBasicMaterial({color:sc}),x,h*.55+2,z+d/2+.22);
+    mkBox(w-4,.8,.3,new THREE.MeshBasicMaterial({color:sc}),x,h*.55+2,z-d/2-.22);
   }
 }
-
-function palmTree(x,z){
-  const trunk=new THREE.Mesh(new THREE.CylinderGeometry(0.18,0.28,7,7),new THREE.MeshLambertMaterial({color:0x8b7555}));
-  trunk.position.set(x,3.5,z); trunk.rotation.z=(Math.random()-0.5)*0.25;
-  trunk.castShadow=true; scene.add(trunk);
+function palm(x,z){
+  const t=new THREE.Mesh(new THREE.CylinderGeometry(.18,.28,7,7),new THREE.MeshLambertMaterial({color:0x8b7555}));
+  t.position.set(x,3.5,z); t.rotation.z=(Math.random()-.5)*.25; t.castShadow=true; scene.add(t);
   const lm=new THREE.MeshLambertMaterial({color:0x2a8a2a,side:THREE.DoubleSide});
-  for(let i=0;i<7;i++){
-    const a=(i/7)*Math.PI*2;
-    const leaf=new THREE.Mesh(new THREE.PlaneGeometry(4.5,1.1),lm);
-    leaf.position.set(x+Math.cos(a)*2,7.8,z+Math.sin(a)*2);
-    leaf.rotation.y=a; leaf.rotation.z=0.45; scene.add(leaf);
-  }
+  for(let i=0;i<7;i++){const a=(i/7)*Math.PI*2;const l=new THREE.Mesh(new THREE.PlaneGeometry(4.5,1.1),lm);l.position.set(x+Math.cos(a)*2,7.8,z+Math.sin(a)*2);l.rotation.y=a;l.rotation.z=.45;scene.add(l);}
   const cm=new THREE.MeshLambertMaterial({color:0x4a2800});
-  for(let i=0;i<3;i++){
-    const a=(i/3)*Math.PI*2;
-    const co=new THREE.Mesh(new THREE.SphereGeometry(0.22,6,5),cm);
-    co.position.set(x+Math.cos(a)*0.6,7.2,z+Math.sin(a)*0.6); scene.add(co);
-  }
+  for(let i=0;i<3;i++){const a=(i/3)*Math.PI*2;const c=new THREE.Mesh(new THREE.SphereGeometry(.22,6,5),cm);c.position.set(x+Math.cos(a)*.6,7.2,z+Math.sin(a)*.6);scene.add(c);}
 }
-
-function lampPost(x,z){
+function lamp(x,z){
   const m=new THREE.MeshLambertMaterial({color:0x707070});
-  mkBox(0.14,6,0.14,m,x,3,z);
-  mkBox(2.2,0.14,0.14,m,x+1.0,6.2,z);
-  const ball=new THREE.Mesh(new THREE.SphereGeometry(0.28,8,7),new THREE.MeshBasicMaterial({color:0xffffcc}));
-  ball.position.set(x+2.1,6.2,z); scene.add(ball);
-  const pl=new THREE.PointLight(0xffffaa,0.55,28);
-  pl.position.set(x+2.1,6,z); scene.add(pl);
+  mkBox(.14,6,.14,m,x,3,z); mkBox(2.2,.14,.14,m,x+1,6.2,z);
+  const b=new THREE.Mesh(new THREE.SphereGeometry(.28,8,7),new THREE.MeshBasicMaterial({color:0xffffcc}));
+  b.position.set(x+2.1,6.2,z); scene.add(b);
+  const p=new THREE.PointLight(0xffffaa,.55,28); p.position.set(x+2.1,6,z); scene.add(p);
 }
 
-// ═══ VEHICLES ═══
+// ═══ CARS ═══
 function spawnCar(x,y,z,color,isNPC){
-  const g=new THREE.Group(); g.position.set(x,0.72,z);
+  const g=new THREE.Group(); g.position.set(x,.72,z);
   const bm=new THREE.MeshLambertMaterial({color});
-  const body=new THREE.Mesh(new THREE.BoxGeometry(4.2,1.15,2.1),bm);
-  body.castShadow=true; g.add(body);
-  const dc=new THREE.Color(color); dc.multiplyScalar(0.8);
-  const roof=new THREE.Mesh(new THREE.BoxGeometry(2.6,0.95,1.9),new THREE.MeshLambertMaterial({color:dc}));
-  roof.position.set(-0.25,1.07,0); roof.castShadow=true; g.add(roof);
-  const gm=new THREE.MeshLambertMaterial({color:0x88bbff,transparent:true,opacity:0.45});
-  [[2.0,1.07,0,0.07,0.85,1.9],[0,1.07,1.0,2.6,0.85,0.07],[-2.8,1.07,0,0.07,0.85,1.9]].forEach(([px,py,pz,w,h,d])=>{
+  const bd=new THREE.Mesh(new THREE.BoxGeometry(4.2,1.15,2.1),bm); bd.castShadow=true; g.add(bd);
+  const dc=new THREE.Color(color); dc.multiplyScalar(.8);
+  const rf=new THREE.Mesh(new THREE.BoxGeometry(2.6,.95,1.9),new THREE.MeshLambertMaterial({color:dc}));
+  rf.position.set(-.25,1.07,0); rf.castShadow=true; g.add(rf);
+  const gm=new THREE.MeshLambertMaterial({color:0x88bbff,transparent:true,opacity:.45});
+  [[2,1.07,0,.07,.85,1.9],[0,1.07,1,2.6,.85,.07],[-2.8,1.07,0,.07,.85,1.9]].forEach(([px,py,pz,w,h,d])=>{
     const wn=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),gm); wn.position.set(px,py,pz); g.add(wn);
   });
-  const wm=new THREE.MeshLambertMaterial({color:0x111111});
-  const wr=new THREE.MeshLambertMaterial({color:0xd0d0d0});
-  [[1.5,-0.38,1.1],[1.5,-0.38,-1.1],[-1.5,-0.38,1.1],[-1.5,-0.38,-1.1]].forEach(([wx,wy,wz])=>{
-    const wh=new THREE.Mesh(new THREE.CylinderGeometry(0.42,0.42,0.38,11),wm);
-    wh.rotation.z=Math.PI/2; wh.position.set(wx,wy,wz); g.add(wh);
-    const ri=new THREE.Mesh(new THREE.CylinderGeometry(0.26,0.26,0.4,6),wr);
-    ri.rotation.z=Math.PI/2; ri.position.set(wx,wy,wz); g.add(ri);
+  const wm=new THREE.MeshLambertMaterial({color:0x111111}),wr=new THREE.MeshLambertMaterial({color:0xd0d0d0});
+  [[1.5,-.38,1.1],[1.5,-.38,-1.1],[-1.5,-.38,1.1],[-1.5,-.38,-1.1]].forEach(([wx,wy,wz])=>{
+    const wh=new THREE.Mesh(new THREE.CylinderGeometry(.42,.42,.38,11),wm); wh.rotation.z=Math.PI/2; wh.position.set(wx,wy,wz); g.add(wh);
+    const ri=new THREE.Mesh(new THREE.CylinderGeometry(.26,.26,.4,6),wr); ri.rotation.z=Math.PI/2; ri.position.set(wx,wy,wz); g.add(ri);
   });
-  [[2.1,-0.1,0.67],[2.1,-0.1,-0.67]].forEach(([px,py,pz])=>{
-    const l=new THREE.Mesh(new THREE.BoxGeometry(0.12,0.32,0.42),new THREE.MeshBasicMaterial({color:0xffffcc}));
-    l.position.set(px,py,pz); g.add(l);
-  });
-  [[-2.1,-0.1,0.67],[-2.1,-0.1,-0.67]].forEach(([px,py,pz])=>{
-    const l=new THREE.Mesh(new THREE.BoxGeometry(0.12,0.28,0.36),new THREE.MeshBasicMaterial({color:0xff2200}));
-    l.position.set(px,py,pz); g.add(l);
-  });
+  [[2.1,-.1,.67],[2.1,-.1,-.67]].forEach(([px,py,pz])=>{const l=new THREE.Mesh(new THREE.BoxGeometry(.12,.32,.42),new THREE.MeshBasicMaterial({color:0xffffcc}));l.position.set(px,py,pz);g.add(l);});
+  [[-2.1,-.1,.67],[-2.1,-.1,-.67]].forEach(([px,py,pz])=>{const l=new THREE.Mesh(new THREE.BoxGeometry(.12,.28,.36),new THREE.MeshBasicMaterial({color:0xff2200}));l.position.set(px,py,pz);g.add(l);});
   scene.add(g);
-  const co={mesh:g,speed:0,npc:isNPC,npcSpeed:10,npcTT:2,driven:false};
-  cars.push(co); return co;
+  const co={mesh:g,speed:0,npc:isNPC,npcSpeed:10,npcTT:2,driven:false}; cars.push(co); return co;
 }
 
-// ═══ PEDESTRIANS ═══
-function createNPC(x,z,color){
+// ═══ NPCs ═══
+function mkNPC(x,z,color){
   const g=new THREE.Group(); g.position.set(x,0,z);
-  const bd=new THREE.Mesh(new THREE.BoxGeometry(0.52,0.92,0.38),new THREE.MeshLambertMaterial({color}));
-  bd.position.y=0.76; g.add(bd);
-  const hd=new THREE.Mesh(new THREE.BoxGeometry(0.40,0.40,0.40),new THREE.MeshLambertMaterial({color:0xf0c090}));
-  hd.position.y=1.42; g.add(hd);
-  const dc=new THREE.Color(color); dc.multiplyScalar(0.55);
+  const bd=new THREE.Mesh(new THREE.BoxGeometry(.52,.92,.38),new THREE.MeshLambertMaterial({color})); bd.position.y=.76; g.add(bd);
+  const hd=new THREE.Mesh(new THREE.BoxGeometry(.4,.4,.4),new THREE.MeshLambertMaterial({color:0xf0c090})); hd.position.y=1.42; g.add(hd);
+  const dc=new THREE.Color(color); dc.multiplyScalar(.55);
   const lm=new THREE.MeshLambertMaterial({color:dc});
-  const l1=new THREE.Mesh(new THREE.BoxGeometry(0.22,0.6,0.28),lm); l1.position.set(-0.14,0.08,0); g.add(l1);
-  const l2=new THREE.Mesh(new THREE.BoxGeometry(0.22,0.6,0.28),lm); l2.position.set( 0.14,0.08,0); g.add(l2);
+  const l1=new THREE.Mesh(new THREE.BoxGeometry(.22,.6,.28),lm); l1.position.set(-.14,.08,0); g.add(l1);
+  const l2=new THREE.Mesh(new THREE.BoxGeometry(.22,.6,.28),lm); l2.position.set(.14,.08,0); g.add(l2);
   scene.add(g);
   npcs.push({mesh:g,dir:Math.random()*Math.PI*2,speed:1.5+Math.random()*1.2,timer:Math.random()*4,hx:x,hz:z,l1,l2});
 }
 
-// ═══ ENTER / EXIT CAR ═══
+// ═══ ENTER / EXIT ═══
 function enterCar(car){
   G.mode='car'; G.currentCar=car; car.driven=true; car.npc=false;
   player.mesh.visible=false;
   document.getElementById('modeLabel').textContent='IN CAR';
-  document.getElementById('modeHint').textContent='IN CAR';
-  // Switch button labels for car mode
-  document.getElementById('btnJump').innerHTML='GAS<span>↑ Joy</span>';
-  document.getElementById('btnRun').innerHTML='REV<span>↓ Joy</span>';
+  document.getElementById('vJump').innerHTML='GAS<small>↑ Joy</small>';
+  document.getElementById('vRun').innerHTML='REV<small>↓ Joy</small>';
 }
 function exitCar(){
   const car=G.currentCar;
   G.mode='foot'; G.currentCar=null; car.driven=false; car.speed=0;
   const ex=car.mesh.position.x+Math.sin(car.mesh.rotation.y+Math.PI/2)*3.5;
   const ez=car.mesh.position.z+Math.cos(car.mesh.rotation.y+Math.PI/2)*3.5;
-  player.pos.set(ex,1,ez);
-  player.mesh.position.copy(player.pos); player.mesh.visible=true;
+  player.pos.set(ex,1,ez); player.mesh.position.copy(player.pos); player.mesh.visible=true;
   document.getElementById('modeLabel').textContent='ON FOOT';
-  document.getElementById('modeHint').textContent='ON FOOT';
-  document.getElementById('btnJump').innerHTML='JUMP<span></span>';
-  document.getElementById('btnRun').innerHTML=`RUN<span id="runState">${T.run?'ON':'OFF'}</span>`;
+  document.getElementById('vJump').innerHTML='JUMP<small></small>';
+  document.getElementById('vRun').innerHTML=`RUN<small id="runTxt">${T.run?'ON':'OFF'}</small>`;
+  if(T.run) document.getElementById('vRun').classList.add('runOn');
 }
 
-// ═══ MAIN LOOP ═══
-let lastTS=0, globalT=0;
+// ═══ GAME LOOP ═══
+let lastTS=0,gT=0;
 function update(ts){
   requestAnimationFrame(update);
-  const dt=Math.min((ts-lastTS)/1000,0.05); lastTS=ts; globalT=ts;
+  const dt=Math.min((ts-lastTS)/1e3,.05); lastTS=ts; gT=ts;
 
-  // Camera look from touch
-  G.yaw   -= camMouse.dx * 0.0022;
-  G.pitch -= camMouse.dy * 0.0022;
-  G.pitch = Math.max(-0.55, Math.min(0.45, G.pitch));
-  camMouse.dx = camMouse.dy = 0;
+  G.yaw  -=cam.dx*.0022;
+  G.pitch-=cam.dy*.0022;
+  G.pitch=Math.max(-.55,Math.min(.45,G.pitch));
+  cam.dx=cam.dy=0;
 
-  // F button one-shot
-  if(T.fDown && !T.fPrev){
-    if(G.mode==='foot' && G.nearCar) enterCar(G.nearCar);
+  // F one-shot
+  if(T.fDown&&!T.fPrev){
+    if(G.mode==='foot'&&G.nearCar) enterCar(G.nearCar);
     else if(G.mode==='car') exitCar();
   }
-  T.fPrev = T.fDown;
+  T.fPrev=T.fDown;
 
   if(G.mode==='foot') updateFoot(dt);
-  else                updateCar(dt);
+  else                updateCarDriving(dt);
 
-  cars.forEach(c=>{ if(c.npc&&!c.driven) updateNPCCar(c,dt); });
+  cars.forEach(c=>{if(c.npc&&!c.driven)updateNPCCar(c,dt);});
   npcs.forEach(n=>updateNPC(n,dt));
-  checkNearCar();
-  updateCamera();
-
-  if(G.wanted>0){ G.wantedTimer+=dt; if(G.wantedTimer>12){G.wanted--;G.wantedTimer=0;} }
-
+  nearCar();
+  updateCam();
+  if(G.wanted>0){G.wantedTimer+=dt;if(G.wantedTimer>12){G.wanted--;G.wantedTimer=0;}}
   drawHUD();
   renderer.render(scene,camera);
 }
 
 function updateFoot(dt){
-  const spd = T.run ? 8.5 : 4.5;
-  const dx = T.joyX;
-  const dz = T.joyY;
-  if(Math.abs(dx)>0.05 || Math.abs(dz)>0.05){
-    const ang = G.yaw + Math.atan2(dx, dz);
-    const nx = player.pos.x + Math.sin(ang)*spd*dt;
-    const nz = player.pos.z + Math.cos(ang)*spd*dt;
-    if(!collides(nx, player.pos.z, 0.45)) player.pos.x=nx;
-    if(!collides(player.pos.x, nz, 0.45)) player.pos.z=nz;
-    player.mesh.rotation.y = -ang;
-    player.mesh.position.y = player.pos.y + Math.sin(globalT*0.013)*0.06;
+  const spd=T.run?8.5:4.5;
+  const dx=T.joyX,dz=T.joyY;
+  if(Math.abs(dx)>.04||Math.abs(dz)>.04){
+    const ang=G.yaw+Math.atan2(dx,dz);
+    const nx=player.pos.x+Math.sin(ang)*spd*dt;
+    const nz=player.pos.z+Math.cos(ang)*spd*dt;
+    if(!hits(nx,player.pos.z,.45))player.pos.x=nx;
+    if(!hits(player.pos.x,nz,.45))player.pos.z=nz;
+    player.mesh.rotation.y=-ang;
+    player.mesh.position.y=player.pos.y+Math.sin(gT*.013)*.06;
   } else {
-    player.mesh.position.y = player.pos.y;
+    player.mesh.position.y=player.pos.y;
   }
-  if(T.jump && player.onGround){ player.vel.y=6.2; player.onGround=false; }
+  if(T.jump&&player.onGround){player.vel.y=6.2;player.onGround=false;}
   if(!player.onGround){
-    player.vel.y -= 16*dt; player.pos.y += player.vel.y*dt;
-    if(player.pos.y<=1){ player.pos.y=1; player.vel.y=0; player.onGround=true; }
+    player.vel.y-=16*dt; player.pos.y+=player.vel.y*dt;
+    if(player.pos.y<=1){player.pos.y=1;player.vel.y=0;player.onGround=true;}
   }
-  player.pos.x = Math.max(-145, Math.min(145, player.pos.x));
-  player.pos.z = Math.max(-62,  Math.min(105, player.pos.z));
-  player.mesh.position.x = player.pos.x;
-  player.mesh.position.z = player.pos.z;
-  G.speed = 0;
+  player.pos.x=Math.max(-145,Math.min(145,player.pos.x));
+  player.pos.z=Math.max(-62,Math.min(105,player.pos.z));
+  player.mesh.position.x=player.pos.x;
+  player.mesh.position.z=player.pos.z;
+  G.speed=0;
 }
 
-function updateCar(dt){
-  const car = G.currentCar; if(!car) return;
-  const fwd = -T.joyY;               // joystick up = forward
-  const str = -T.joyX;               // joystick left = turn left
-  if(T.brake) car.speed *= 0.83;
-  else car.speed += fwd * 22 * dt;
-  car.speed = Math.max(-12, Math.min(40, car.speed));
-  if(Math.abs(T.joyY)<0.05) car.speed *= 0.96;
-  if(Math.abs(car.speed)<0.08) car.speed=0;
-  if(Math.abs(car.speed)>0.4) car.mesh.rotation.y += str*1.9*dt*Math.sign(car.speed);
+function updateCarDriving(dt){
+  const car=G.currentCar; if(!car)return;
+  const fwd=-T.joyY, str=-T.joyX;
+  if(T.brake) car.speed*=.83;
+  else car.speed+=fwd*22*dt;
+  car.speed=Math.max(-12,Math.min(40,car.speed));
+  if(Math.abs(T.joyY)<.05)car.speed*=.96;
+  if(Math.abs(car.speed)<.08)car.speed=0;
+  if(Math.abs(car.speed)>.4)car.mesh.rotation.y+=str*1.9*dt*Math.sign(car.speed);
   const vx=Math.sin(car.mesh.rotation.y)*car.speed*dt;
   const vz=Math.cos(car.mesh.rotation.y)*car.speed*dt;
-  const nx=car.mesh.position.x+vx, nz=car.mesh.position.z+vz;
-  if(nx>-145&&nx<145) car.mesh.position.x=nx; else car.speed*=-0.4;
-  if(nz>-62 &&nz<105) car.mesh.position.z=nz; else car.speed*=-0.4;
-  if(collides(nx,car.mesh.position.z,2.3)){car.mesh.position.x-=vx;car.speed*=-0.35;G.wanted=Math.min(6,G.wanted+1);G.wantedTimer=0;}
-  if(collides(car.mesh.position.x,nz,2.3)){car.mesh.position.z-=vz;car.speed*=-0.35;}
+  const nx=car.mesh.position.x+vx,nz=car.mesh.position.z+vz;
+  if(nx>-145&&nx<145)car.mesh.position.x=nx; else car.speed*=-.4;
+  if(nz>-62&&nz<105)car.mesh.position.z=nz; else car.speed*=-.4;
+  if(hits(nx,car.mesh.position.z,2.3)){car.mesh.position.x-=vx;car.speed*=-.35;G.wanted=Math.min(6,G.wanted+1);G.wantedTimer=0;}
+  if(hits(car.mesh.position.x,nz,2.3)){car.mesh.position.z-=vz;car.speed*=-.35;}
   player.pos.set(car.mesh.position.x,1,car.mesh.position.z);
-  G.speed = Math.abs(car.speed*3.6)|0;
+  G.speed=Math.abs(car.speed*3.6)|0;
 }
 
 function updateNPCCar(car,dt){
-  car.npcTT -= dt;
-  if(car.npcTT<0){
-    car.mesh.rotation.y += (Math.random()>0.5?1:-1)*Math.PI/2;
-    car.npcTT = 2+Math.random()*4;
-  }
-  const vx=Math.sin(car.mesh.rotation.y)*car.npcSpeed*dt;
-  const vz=Math.cos(car.mesh.rotation.y)*car.npcSpeed*dt;
-  let nx=car.mesh.position.x+vx, nz=car.mesh.position.z+vz;
+  car.npcTT-=dt;
+  if(car.npcTT<0){car.mesh.rotation.y+=(Math.random()>.5?1:-1)*Math.PI/2;car.npcTT=2+Math.random()*4;}
+  let nx=car.mesh.position.x+Math.sin(car.mesh.rotation.y)*car.npcSpeed*dt;
+  let nz=car.mesh.position.z+Math.cos(car.mesh.rotation.y)*car.npcSpeed*dt;
   if(nx<-130||nx>130){car.mesh.rotation.y+=Math.PI;nx=Math.max(-130,Math.min(130,nx));}
-  if(nz<-55 ||nz>95) {car.mesh.rotation.y+=Math.PI;nz=Math.max(-55, Math.min(95, nz));}
+  if(nz<-55||nz>95){car.mesh.rotation.y+=Math.PI;nz=Math.max(-55,Math.min(95,nz));}
   car.mesh.position.x=nx; car.mesh.position.z=nz;
 }
 
 function updateNPC(n,dt){
   n.timer+=dt;
-  if(n.timer>3+Math.random()*3){ n.dir+=(Math.random()-0.5)*2; n.timer=0; }
+  if(n.timer>3+Math.random()*3){n.dir+=(Math.random()-.5)*2;n.timer=0;}
   const nx=n.mesh.position.x+Math.sin(n.dir)*n.speed*dt;
   const nz=n.mesh.position.z+Math.cos(n.dir)*n.speed*dt;
-  const dx=nx-n.hx, dz=nz-n.hz;
-  if(dx*dx+dz*dz>900) n.dir=Math.atan2(-dx,-dz);
+  const dx=nx-n.hx,dz=nz-n.hz;
+  if(dx*dx+dz*dz>900)n.dir=Math.atan2(-dx,-dz);
   n.mesh.position.x=Math.max(-145,Math.min(145,nx));
-  n.mesh.position.z=Math.max(-60, Math.min(105,nz));
+  n.mesh.position.z=Math.max(-60,Math.min(105,nz));
   n.mesh.rotation.y=-n.dir+Math.PI;
-  const t=performance.now()*0.008;
-  n.l1.position.y=0.08+Math.sin(t+n.hx)*0.1;
-  n.l2.position.y=0.08-Math.sin(t+n.hx)*0.1;
+  const t=performance.now()*.008;
+  n.l1.position.y=.08+Math.sin(t+n.hx)*.1;
+  n.l2.position.y=.08-Math.sin(t+n.hx)*.1;
 }
 
-function updateCamera(){
+function updateCam(){
   const tp=G.mode==='car'?G.currentCar.mesh.position:player.pos;
-  const cy2=Math.cos(G.pitch), sy=Math.sin(G.pitch);
-  const cx=tp.x-Math.sin(G.yaw)*G.camDist*cy2;
-  const cy=tp.y+G.camDist*sy+2.2;
-  const cz=tp.z-Math.cos(G.yaw)*G.camDist*cy2;
-  camera.position.set(cx,Math.max(tp.y+0.5,cy),cz);
+  const cy2=Math.cos(G.pitch),sy=Math.sin(G.pitch);
+  camera.position.set(
+    tp.x-Math.sin(G.yaw)*G.camDist*cy2,
+    Math.max(tp.y+.5,tp.y+G.camDist*sy+2.2),
+    tp.z-Math.cos(G.yaw)*G.camDist*cy2
+  );
   camera.lookAt(tp.x,tp.y+1.6,tp.z);
 }
 
-function checkNearCar(){
-  if(G.mode!=='foot'){ G.nearCar=null; document.getElementById('enterPrompt').style.display='none'; return; }
+function nearCar(){
+  if(G.mode!=='foot'){G.nearCar=null;document.getElementById('enterPrompt').style.display='none';return;}
   G.nearCar=null; let md=4.5;
   cars.forEach(c=>{
-    if(c.driven) return;
-    const dx=player.pos.x-c.mesh.position.x, dz=player.pos.z-c.mesh.position.z;
+    if(c.driven)return;
+    const dx=player.pos.x-c.mesh.position.x,dz=player.pos.z-c.mesh.position.z;
     const d=Math.sqrt(dx*dx+dz*dz);
     if(d<md){md=d;G.nearCar=c;}
   });
@@ -620,42 +563,29 @@ function drawHUD(){
   document.getElementById('speedLabel').textContent=`Speed: ${G.speed} km/h`;
   document.getElementById('healthBar').style.width=G.health+'%';
   document.getElementById('healthBar').style.background=G.health>50?'#0f0':G.health>25?'#fa0':'#f00';
-  let ws=''; for(let i=0;i<G.wanted;i++) ws+='★'; for(let i=G.wanted;i<6;i++) ws+='☆';
+  let ws='';for(let i=0;i<G.wanted;i++)ws+='★';for(let i=G.wanted;i<6;i++)ws+='☆';
   document.getElementById('wanted').textContent=ws;
-
   const mc=mmCtx,sz=150,r=73,cx=75,cy=75;
   mc.clearRect(0,0,sz,sz);
-  mc.save(); mc.beginPath(); mc.arc(cx,cy,r,0,Math.PI*2); mc.clip();
-  mc.fillStyle='#1a1a2e'; mc.fillRect(0,0,sz,sz);
+  mc.save();mc.beginPath();mc.arc(cx,cy,r,0,Math.PI*2);mc.clip();
+  mc.fillStyle='#1a1a2e';mc.fillRect(0,0,sz,sz);
   const sc=sz/320;
-  mc.fillStyle='#0077bb'; mc.fillRect(0,0,sz,cy+(-60)*sc+r);
-  mc.fillStyle='#f5e07a'; mc.fillRect(0,cy+(-100)*sc+r,sz,40*sc);
+  mc.fillStyle='#0077bb';mc.fillRect(0,0,sz,cy+(-60)*sc+r);
+  mc.fillStyle='#f5e07a';mc.fillRect(0,cy+(-100)*sc+r,sz,40*sc);
   mc.fillStyle='#333';
-  [-50,-18,14,46,78].forEach(z=>{ const py=cy+z*sc; mc.fillRect(0,py-3,sz,6); });
-  [-96,-64,-32,0,32,64,96].forEach(x=>{ const px=cx+x*sc; mc.fillRect(px-3,0,6,sz); });
+  [-50,-18,14,46,78].forEach(z=>{const py=cy+z*sc;mc.fillRect(0,py-3,sz,6);});
+  [-96,-64,-32,0,32,64,96].forEach(x=>{const px=cx+x*sc;mc.fillRect(px-3,0,6,sz);});
   mc.fillStyle='rgba(120,100,70,0.7)';
-  collidables.forEach(c=>{ mc.fillRect(cx+c.minX*sc,cy+c.minZ*sc,(c.maxX-c.minX)*sc,(c.maxZ-c.minZ)*sc); });
+  col.forEach(c=>mc.fillRect(cx+c.minX*sc,cy+c.minZ*sc,(c.maxX-c.minX)*sc,(c.maxZ-c.minZ)*sc));
   mc.fillStyle='#aaa';
-  cars.forEach(c=>{ if(c.driven) return; mc.fillRect(cx+c.mesh.position.x*sc-1,cy+c.mesh.position.z*sc-1,4,3); });
+  cars.forEach(c=>{if(c.driven)return;mc.fillRect(cx+c.mesh.position.x*sc-1,cy+c.mesh.position.z*sc-1,4,3);});
   const pp=G.mode==='car'?G.currentCar.mesh.position:player.pos;
-  mc.fillStyle='#ff2200'; mc.beginPath(); mc.arc(cx+pp.x*sc,cy+pp.z*sc,4,0,Math.PI*2); mc.fill();
-  mc.fillStyle='#fff'; mc.font='bold 10px Arial'; mc.textAlign='center'; mc.fillText('N',cx,cy-r+13);
+  mc.fillStyle='#ff2200';mc.beginPath();mc.arc(cx+pp.x*sc,cy+pp.z*sc,4,0,Math.PI*2);mc.fill();
+  mc.fillStyle='#fff';mc.font='bold 10px Arial';mc.textAlign='center';mc.fillText('N',cx,cy-r+13);
   mc.restore();
 }
 
-// ═══ START ═══
 buildMap();
-
-document.getElementById('overlay').addEventListener('click',()=>{
-  document.getElementById('overlay').style.display='none';
-  document.getElementById('hud').style.display='block';
-});
-document.getElementById('overlay').addEventListener('touchstart',e=>{
-  e.preventDefault();
-  document.getElementById('overlay').style.display='none';
-  document.getElementById('hud').style.display='block';
-},{passive:false});
-
 requestAnimationFrame(update);
 </script>
 </body>
